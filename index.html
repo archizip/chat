@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+    <title>Socket.IO chat</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font: 13px Helvetica, Arial; }
+        form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+        form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+        form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+        #messages { list-style-type: none; margin: 0; padding: 0; }
+        #messages li { padding: 5px 10px; }
+        #messages li:nth-child(odd) { background: #eee; }
+        .nickname-modal {
+            display: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+        }
+        label {
+            font-size: 15px;
+            font-family: "Arial", sans-serif;
+        }
+        .nickname-form {
+            width: 250px;
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #000;
+            position: absolute;
+            top: 50%;
+            margin-top: -50px;
+            left: 50%;
+            margin-left: -125px;
+            padding: 20px;
+            text-align: center;
+        }
+        #save-nickname {
+            display: block;
+            margin: 15px auto 0 auto;
+            background: #008000;
+            color: #fff;
+            border: 1px solid #000;
+            padding: 5px 25px;
+            border-radius: 4px;
+        }
+        #nickname {
+            margin-top: 15px;
+            height: 25px;
+            border-radius: 5px;
+            border: 1px solid #000;
+        }
+        .nickname {
+            display: inline-block;
+            font-size: 15px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<ul id="messages"></ul>
+<form action="">
+    <input id="m" autocomplete="off" /><button>Send</button>
+</form>
+<div class="nickname-modal">
+    <div class="nickname-form">
+        <label for="nickname">Enter your nickname:</label>
+        <input type="text" id="nickname">
+        <button id="save-nickname">Save</button>
+    </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+    $(function () {
+        var socket = io();
+
+        $('form').submit(function(){
+            socket.emit('chat message', { msg:$('#m').val(), nickname:''});
+            $('#m').val('');
+            return false;
+        });
+
+        socket.on('hi', function () {
+            $('#messages').append($('<li>').text('Someone connected'));
+        });
+
+        socket.on('bye', function () {
+            $('#messages').append($('<li>').text('Someone disconnected'));
+        });
+
+        socket.on('chat message', function(data){
+            $('#messages').append($('<li class="message">').html('<div class="nickname">'+ data.nickname +':</div>').append(data.msg));
+        });
+
+        socket.on('show modal', function () {
+           $('.nickname-modal').toggle('show');
+        });
+
+        $('#save-nickname').on('click', function () {
+            socket.emit('save nickname', $('#nickname').val());
+            $('#nickname').val('');
+        });
+
+        socket.on('user typing', function (nickname) {
+            $('#messages').append($('<li class="is-typing">').html('<div class="nickname">'+ nickname +' is typing...</div>'));
+        });
+
+        $('#m').on('blur', function () {
+        });
+    });
+</script>
+
+</body>
+</html>
